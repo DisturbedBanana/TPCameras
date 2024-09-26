@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
+using static System.TimeZoneInfo;
 
 public class CameraController : MonoBehaviour
 {
@@ -29,6 +30,11 @@ public class CameraController : MonoBehaviour
 
     public new Camera camera;
     [SerializeField] private CameraConfiguration configuration;
+    private CameraConfiguration currentConfiguration;
+    private bool isTransitioning = false;
+    float elapsedTime = 0;
+    public float transitionTime = 1;
+
 
     private List<AView> activeViews = new List<AView>();
 
@@ -53,7 +59,22 @@ public class CameraController : MonoBehaviour
     {
         configuration = ComputeAverage();
         ApplyConfiguration();
-        
+
+        if (isTransitioning)
+        {
+            elapsedTime += Time.deltaTime;
+
+            float t = Mathf.Clamp01(elapsedTime / transitionTime);
+
+            currentConfiguration = SmoothedCameraMovement(currentConfiguration, ComputeAverage(), t);
+
+            ApplyConfiguration();
+
+            if (elapsedTime >= transitionTime)
+            {
+                isTransitioning = false;
+            }
+        }
     }
 
   CameraConfiguration ComputeAverage()
@@ -84,4 +105,21 @@ public class CameraController : MonoBehaviour
 
         return average;
     }
+
+    CameraConfiguration SmoothedCameraMovement(CameraConfiguration startConfig,CameraConfiguration destinationConfig,float t)
+    {
+        CameraConfiguration result = new CameraConfiguration
+        {
+            yaw = Mathf.Lerp(startConfig.yaw, destinationConfig.yaw, t),
+            pitch = Mathf.Lerp(startConfig.pitch, destinationConfig.pitch, t),
+            roll = Mathf.Lerp(startConfig.roll, destinationConfig.roll, t),
+            pivot = Vector3.Lerp(startConfig.pivot, destinationConfig.pivot, t),
+            distance = Mathf.Lerp(startConfig.distance, destinationConfig.distance, t),
+            fov = Mathf.Lerp(startConfig.fov, destinationConfig.fov, t)
+        };
+
+        return result;
+    }
+
+
 }
