@@ -3,16 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Structs : MonoBehaviour
-{
     [Serializable]
     public struct CameraConfiguration
     {
+        [Range(-180, 180)]
         public float yaw;
+        [Range(-90, 90)]
         public float pitch;
+        [Range(-180, 180)]
         public float roll;
         public Vector3 pivot;
         public float distance;
+        [Range(0, 179)]
         public float fov;
 
         public Quaternion GetRotation() => Quaternion.Euler(pitch, yaw, roll);
@@ -34,4 +36,4 @@ public class Structs : MonoBehaviour
             Gizmos.matrix = Matrix4x4.identity;
         }
     }
-}
+
