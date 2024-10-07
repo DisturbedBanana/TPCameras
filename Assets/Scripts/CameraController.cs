@@ -77,22 +77,23 @@ public class CameraController : MonoBehaviour
         }
     }
 
-  CameraConfiguration ComputeAverage()
+    CameraConfiguration ComputeAverage()
     {
         CameraConfiguration average = new CameraConfiguration();
-        CameraConfiguration config = new CameraConfiguration();
         Vector2 Sum = new Vector2(0, 0);
         float totalWeight = 0;
 
         foreach (AView view in activeViews)
         {
+            CameraConfiguration config = view.GetCameraConfiguration(); // Fetch the view's camera config
+
             totalWeight += view.weight;
-            average.pitch += view.GetCameraConfiguration().pitch * view.weight;
-            Sum += new Vector2(Mathf.Cos(config.yaw * Mathf.Deg2Rad),Mathf.Sin(config.yaw * Mathf.Deg2Rad)) * view.weight;
-            average.roll += view.GetCameraConfiguration().roll * view.weight;
-            average.pivot += view.GetCameraConfiguration().pivot * view.weight;
-            average.distance += view.GetCameraConfiguration().distance * view.weight;
-            average.fov += view.GetCameraConfiguration().fov * view.weight;
+            average.pitch += config.pitch * view.weight;
+            Sum += new Vector2(Mathf.Cos(config.yaw * Mathf.Deg2Rad), Mathf.Sin(config.yaw * Mathf.Deg2Rad)) * view.weight;
+            average.roll += config.roll * view.weight;
+            average.pivot += config.pivot * view.weight;
+            average.distance += config.distance * view.weight;
+            average.fov += config.fov * view.weight;
         }
 
         average.pitch /= totalWeight;
@@ -102,9 +103,9 @@ public class CameraController : MonoBehaviour
         average.distance /= totalWeight;
         average.fov /= totalWeight;
 
-
         return average;
     }
+
 
     CameraConfiguration SmoothedCameraMovement(CameraConfiguration startConfig,CameraConfiguration destinationConfig,float t)
     {
