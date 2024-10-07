@@ -31,8 +31,7 @@ public class CameraController : MonoBehaviour
     public new Camera camera;
     [SerializeField] private CameraConfiguration configuration;
     private CameraConfiguration currentConfiguration;
-    private bool isTransitioning = false;
-    float elapsedTime = 0;
+
     public float transitionTime = 1;
 
 
@@ -57,24 +56,8 @@ public class CameraController : MonoBehaviour
 
     private void Update()
     {
-        configuration = ComputeAverage();
+        SmoothedCameraMovement(currentConfiguration, ComputeAverage(), 0.5f);
         ApplyConfiguration();
-
-        if (isTransitioning)
-        {
-            elapsedTime += Time.deltaTime;
-
-            float t = Mathf.Clamp01(elapsedTime / transitionTime);
-
-            currentConfiguration = SmoothedCameraMovement(currentConfiguration, ComputeAverage(), t);
-
-            ApplyConfiguration();
-
-            if (elapsedTime >= transitionTime)
-            {
-                isTransitioning = false;
-            }
-        }
     }
 
     CameraConfiguration ComputeAverage()
