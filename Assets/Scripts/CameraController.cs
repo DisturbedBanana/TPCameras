@@ -1,10 +1,6 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
-using static System.TimeZoneInfo;
 
 public class CameraController : MonoBehaviour
 {
@@ -22,21 +18,21 @@ public class CameraController : MonoBehaviour
         }
     }
 
-
-    public void OnDrawGizmos()
-    {
-        configuration.DrawGizmos(Color.red);
-    }
-
     public new Camera camera;
-    [SerializeField] private CameraConfiguration configuration;
-    private CameraConfiguration currentConfiguration;
-
-    public float transitionTime = 1;
-
+    [SerializeField] private CameraConfiguration configurationCible;  // La configuration cible
+    [SerializeField] private CameraConfiguration configurationCourante;  // La configuration courante
+    private bool isTransitioning = false;
+    public float smoothTime = 0.2f;  // Temps de lissage pour la transition
+    private float yawVelocity, pitchVelocity, rollVelocity, fovVelocity, distanceVelocity;  // Vélocités pour le lissage
 
     private List<AView> activeViews = new List<AView>();
 
+    private void Start()
+    {
+        // Initialisation des configurations au démarrage
+        configurationCible = ComputeAverage();
+        configurationCourante = configurationCible;
+    }
 
     public void AddView(AView view)
     {
@@ -50,13 +46,26 @@ public class CameraController : MonoBehaviour
 
     private void ApplyConfiguration()
     {
-        camera.transform.position = configuration.GetPosition();
-        camera.transform.rotation = configuration.GetRotation();
+        // Appliquer la configuration courante à la caméra
+        camera.transform.position = configurationCourante.GetPosition();
+        camera.transform.rotation = configurationCourante.GetRotation();
+        camera.fieldOfView = configurationCourante.fov;
     }
 
     private void Update()
     {
-        SmoothedCameraMovement(currentConfiguration, ComputeAverage(), 0.5f);
+        // Calcul de la configuration cible en fonction des vues actives
+        configurationCible = ComputeAverage();
+
+        // Lisser la transition entre configurationCourante et configurationCible
+        configurationCourante.yaw = Mathf.SmoothDampAngle(configurationCourante.yaw, configurationCible.yaw, ref yawVelocity, smoothTime);
+        configurationCourante.pitch = Mathf.SmoothDamp(configurationCourante.pitch, configurationCible.pitch, ref pitchVelocity, smoothTime);
+        configurationCourante.roll = Mathf.SmoothDamp(configurationCourante.roll, configurationCible.roll, ref rollVelocity, smoothTime);
+        configurationCourante.distance = Mathf.SmoothDamp(configurationCourante.distance, configurationCible.distance, ref distanceVelocity, smoothTime);
+        configurationCourante.fov = Mathf.SmoothDamp(configurationCourante.fov, configurationCible.fov, ref fovVelocity, smoothTime);
+        configurationCourante.pivot = Vector3.Lerp(configurationCourante.pivot, configurationCible.pivot, Time.deltaTime / smoothTime);
+
+        // Appliquer la configuration lissée à la caméra
         ApplyConfiguration();
     }
 
@@ -68,42 +77,39 @@ public class CameraController : MonoBehaviour
 
         foreach (AView view in activeViews)
         {
-            CameraConfiguration config = view.GetCameraConfiguration(); // Fetch the view's camera config
-
+            var viewConfig = view.GetCameraConfiguration();
             totalWeight += view.weight;
-            average.pitch += config.pitch * view.weight;
-            Sum += new Vector2(Mathf.Cos(config.yaw * Mathf.Deg2Rad), Mathf.Sin(config.yaw * Mathf.Deg2Rad)) * view.weight;
-            average.roll += config.roll * view.weight;
-            average.pivot += config.pivot * view.weight;
-            average.distance += config.distance * view.weight;
-            average.fov += config.fov * view.weight;
+
+            average.pitch += viewConfig.pitch * view.weight;
+            Sum += new Vector2(Mathf.Cos(viewConfig.yaw * Mathf.Deg2Rad), Mathf.Sin(viewConfig.yaw * Mathf.Deg2Rad)) * view.weight;
+            average.roll += viewConfig.roll * view.weight;
+            average.pivot += viewConfig.pivot * view.weight;
+            average.distance += viewConfig.distance * view.weight;
+            average.fov += viewConfig.fov * view.weight;
         }
 
-        average.pitch /= totalWeight;
-        average.yaw = Vector2.SignedAngle(Vector2.right, Sum);
-        average.roll /= totalWeight;
-        average.pivot /= totalWeight;
-        average.distance /= totalWeight;
-        average.fov /= totalWeight;
+        if (totalWeight > 0)
+        {
+            average.pitch /= totalWeight;
+            average.yaw = Vector2.SignedAngle(Vector2.right, Sum);  // Calcul du yaw
+            average.roll /= totalWeight;
+            average.pivot /= totalWeight;
+            average.distance /= totalWeight;
+            average.fov /= totalWeight;
+        }
+        else
+        {
+            Debug.LogWarning("Total weight is zero, returning default camera configuration.");
+            return new CameraConfiguration();  // Retourner une configuration par défaut si pas de vues actives
+        }
+
+        // Vérification des NaN pour éviter les erreurs de calcul
+        if (float.IsNaN(average.yaw) || float.IsNaN(average.pitch) || float.IsNaN(average.roll) || float.IsNaN(average.distance))
+        {
+            Debug.LogError("Invalid camera configuration detected (NaN values). Returning default configuration.");
+            return new CameraConfiguration();  // Retourner une configuration par défaut si NaN détecté
+        }
 
         return average;
     }
-
-
-    CameraConfiguration SmoothedCameraMovement(CameraConfiguration startConfig,CameraConfiguration destinationConfig,float t)
-    {
-        CameraConfiguration result = new CameraConfiguration
-        {
-            yaw = Mathf.Lerp(startConfig.yaw, destinationConfig.yaw, t),
-            pitch = Mathf.Lerp(startConfig.pitch, destinationConfig.pitch, t),
-            roll = Mathf.Lerp(startConfig.roll, destinationConfig.roll, t),
-            pivot = Vector3.Lerp(startConfig.pivot, destinationConfig.pivot, t),
-            distance = Mathf.Lerp(startConfig.distance, destinationConfig.distance, t),
-            fov = Mathf.Lerp(startConfig.fov, destinationConfig.fov, t)
-        };
-
-        return result;
-    }
-
-
 }
