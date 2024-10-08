@@ -1,38 +1,29 @@
-using System.Collections;
-using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 public abstract class AView : MonoBehaviour
 {
-    public float weight;
-    public bool isActiveOnStart;
-    public virtual CameraConfiguration GetCameraConfiguration()
-    {
-        return new CameraConfiguration();
-    }
-    public void OnDrawGizmos()
-    {
-        GetCameraConfiguration().DrawGizmos(Color.blue);
-    }
+    [Header("View Settings")]
+    public float weight = 1.0f; // Weight for interpolation
+    public bool isActiveOnStart = true; // Determines if the view is active at the start
 
-    private void Start()
+    protected virtual void Start()
     {
-        if(isActiveOnStart)
+        if (isActiveOnStart)
         {
             SetActive(true);
         }
     }
 
-    public void SetActive(bool active)
+    // Activate or deactivate the view
+    public void SetActive(bool isActive)
     {
-        if (active)
-        {
+        if (isActive)
             CameraController.Instance.AddView(this);
-        }
         else
-        {
             CameraController.Instance.RemoveView(this);
-        }
     }
 
+    // Abstract method to get the camera configuration from the view
+    public abstract CameraConfiguration GetConfiguration();
 }

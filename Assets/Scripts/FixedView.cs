@@ -1,30 +1,31 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class FixedView : AView
 {
-    [Range(0, 360)]
+    [Header("Fixed View Parameters")]
+    [Range(-180f, 180f)]
     public float yaw;
-    [Range(-90, 90)]
+
+    [Range(-90f, 90f)]
     public float pitch;
-    [Range(-180, 180)]
+
+    [Range(-180f, 180f)]
     public float roll;
-    [Range(0, 179)]
+
+    [Range(0f, 179f)]
     public float fov;
 
-    public override CameraConfiguration GetCameraConfiguration()
+    // Override to provide this view's camera configuration
+    public override CameraConfiguration GetConfiguration()
     {
-        return new CameraConfiguration()
+        return new CameraConfiguration
         {
-            pivot = transform.position,
-            distance = 0,
             yaw = yaw,
             pitch = pitch,
             roll = roll,
-            fov = fov
-
+            fov = fov,
+            pivot = transform.position,
+            distance = 0f // Fixed position; no offset
         };
     }
-
 }
