@@ -30,13 +30,12 @@ public class ViewVolumeBlender : MonoBehaviour
 
         foreach (AViewVolume viewVolume in activeViewVolumes)
         {
-            viewVolume.view.weight = Mathf.Clamp01(viewVolume.ComputeSelfWeight());
-            float remainingWeight = 1.0f-viewVolume.view.weight;
+            float weight = viewVolume.ComputeSelfWeight();
+            weight = Mathf.Clamp01(weight);
+            float remainingWeight = 1.0f - weight;
 
+            viewVolume.view.weight = weight;
             viewVolume.view.weight *= remainingWeight;
-
-            volumePerViews[viewVolume.view.weight] += viewVolume.view.weight;
-
         }
     }
 
