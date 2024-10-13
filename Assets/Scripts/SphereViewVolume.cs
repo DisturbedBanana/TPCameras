@@ -31,7 +31,7 @@ public class SphereViewVolume : AViewVolume
         }
     }
 
-    void ComputeSelfWeight()
+    public override float ComputeSelfWeight()
     {
         if (_distance <= innerRadius)
         {
@@ -45,6 +45,8 @@ public class SphereViewVolume : AViewVolume
         {
             SelfWeight = 1 - (_distance - innerRadius) / (outerRadius - innerRadius);
         }
+
+        return SelfWeight;
     }
 
     private void OnDrawGizmos()
