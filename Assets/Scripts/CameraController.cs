@@ -3,28 +3,26 @@ using System.Collections.Generic;
 
 public class CameraController : MonoBehaviour
 {
-    // Singleton Instance
     public static CameraController Instance { get; private set; }
 
     [Header("Camera Settings")]
-    public Camera camera; // The camera to control
+    public Camera camera; 
 
-    private CameraConfiguration configuration; // Current configuration applied to the camera
-    private CameraConfiguration targetConfiguration; // Target configuration for smoothing
+    private CameraConfiguration _configuration; 
+    private CameraConfiguration _targetConfiguration; 
 
     [Header("Smoothing Settings")]
     [Range(0f, 1f)]
-    public float smoothingSpeed = 0.1f; // Determines how quickly the camera transitions to the target configuration
+    public float smoothingSpeed = 0.1f; 
 
-    private List<AView> activeViews = new List<AView>(); // List of active views
+    private List<AView> _activeViews = new List<AView>();
+    private bool _isCutRequested = false;
 
     private void Awake()
     {
-        // Implement Singleton Pattern
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Persist across scenes if needed
         }
         else
         {
@@ -32,63 +30,64 @@ public class CameraController : MonoBehaviour
             return;
         }
 
-        // Initialize configurations
-        configuration = ComputeAverage();
-        targetConfiguration = configuration;
+        _configuration = ComputeAverage();
+        _targetConfiguration = _configuration;
+    }
+
+    public void Cut()
+    {
+        _isCutRequested = true;
     }
 
     private void Update()
     {
-        // Compute the target configuration based on active views
-        targetConfiguration = ComputeAverage();
+        _targetConfiguration = ComputeAverage();
 
-        // Smoothly interpolate between current and target configurations
+        if (_isCutRequested)
+        {
+            ApplyConfiguration();
+            _isCutRequested = false;
+        }
         SmoothConfiguration();
 
-        // Apply the smoothed configuration to the camera
         ApplyConfiguration();
     }
 
-    // Smoothly interpolate between current and target configurations
     private void SmoothConfiguration()
     {
-        configuration.yaw = Mathf.LerpAngle(configuration.yaw, targetConfiguration.yaw, smoothingSpeed);
-        configuration.pitch = Mathf.Lerp(configuration.pitch, targetConfiguration.pitch, smoothingSpeed);
-        configuration.roll = Mathf.Lerp(configuration.roll, targetConfiguration.roll, smoothingSpeed);
-        configuration.pivot = Vector3.Lerp(configuration.pivot, targetConfiguration.pivot, smoothingSpeed);
-        configuration.distance = Mathf.Lerp(configuration.distance, targetConfiguration.distance, smoothingSpeed);
-        configuration.fov = Mathf.Lerp(configuration.fov, targetConfiguration.fov, smoothingSpeed);
+        _configuration.yaw = Mathf.LerpAngle(_configuration.yaw, _targetConfiguration.yaw, smoothingSpeed);
+        _configuration.pitch = Mathf.Lerp(_configuration.pitch, _targetConfiguration.pitch, smoothingSpeed);
+        _configuration.roll = Mathf.Lerp(_configuration.roll, _targetConfiguration.roll, smoothingSpeed);
+        _configuration.pivot = Vector3.Lerp(_configuration.pivot, _targetConfiguration.pivot, smoothingSpeed);
+        _configuration.distance = Mathf.Lerp(_configuration.distance, _targetConfiguration.distance, smoothingSpeed);
+        _configuration.fov = Mathf.Lerp(_configuration.fov, _targetConfiguration.fov, smoothingSpeed);
     }
 
-    // Apply the current configuration to the camera
     private void ApplyConfiguration()
     {
         if (camera != null)
         {
-            camera.transform.position = configuration.GetPosition();
-            camera.transform.rotation = configuration.GetRotation();
+            camera.transform.position = _configuration.GetPosition();
+            camera.transform.rotation = _configuration.GetRotation();
         }
     }
 
-    // Add a view to the activeViews list
     public void AddView(AView view)
     {
-        if (!activeViews.Contains(view))
-            activeViews.Add(view);
+        if (!_activeViews.Contains(view))
+            _activeViews.Add(view);
     }
 
-    // Remove a view from the activeViews list
     public void RemoveView(AView view)
     {
-        if (activeViews.Contains(view))
-            activeViews.Remove(view);
+        if (_activeViews.Contains(view))
+            _activeViews.Remove(view);
     }
 
-    // Compute the weighted average of all active views
     public CameraConfiguration ComputeAverage()
     {
-        if (activeViews.Count == 0)
-            return configuration; // Return current configuration if no active views
+        if (_activeViews.Count == 0)
+            return _configuration; 
 
         CameraConfiguration average = new CameraConfiguration();
         Vector2 yawSum = Vector2.zero;
@@ -99,15 +98,13 @@ public class CameraController : MonoBehaviour
         float totalWeight = 0f;
         Vector3 pivotSum = Vector3.zero;
 
-        foreach (AView view in activeViews)
+        foreach (AView view in _activeViews)
         {
             CameraConfiguration config = view.GetConfiguration();
             float weight = view.weight;
 
-            // Sum up the yaw using vector representation to handle angle wrapping
             yawSum += new Vector2(Mathf.Cos(config.yaw * Mathf.Deg2Rad), Mathf.Sin(config.yaw * Mathf.Deg2Rad)) * weight;
 
-            // Sum other parameters weighted by view weight
             pitchSum += config.pitch * weight;
             rollSum += config.roll * weight;
             distanceSum += config.distance * weight;
@@ -116,10 +113,8 @@ public class CameraController : MonoBehaviour
             totalWeight += weight;
         }
 
-        // Calculate the average yaw from the summed vectors
         average.yaw = Mathf.Atan2(yawSum.y, yawSum.x) * Mathf.Rad2Deg;
 
-        // Calculate average for other parameters
         average.pitch = pitchSum / totalWeight;
         average.roll = rollSum / totalWeight;
         average.distance = distanceSum / totalWeight;
@@ -129,12 +124,11 @@ public class CameraController : MonoBehaviour
         return average;
     }
 
-    // Draw Gizmos for the current configuration
     private void OnDrawGizmos()
     {
         if (camera != null)
         {
-            configuration.DrawGizmos(Color.blue);
+            _configuration.DrawGizmos(Color.blue);
         }
     }
 }

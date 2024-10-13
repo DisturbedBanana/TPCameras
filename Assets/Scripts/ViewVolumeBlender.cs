@@ -14,9 +14,8 @@ public class ViewVolumeBlender : MonoBehaviour
     private List<AViewVolume> activeViewVolumes = new List<AViewVolume>();
     private Dictionary<AView, List<AViewVolume>> volumePerViews;
 
-    private void Update()
+    public void Update()
     {
-        // Sort the active view volumes by priority and UID
         activeViewVolumes.Sort((x, y) =>
         {
             int priorityComparison = y.priority.CompareTo(x.priority);

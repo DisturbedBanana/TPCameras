@@ -30,43 +30,34 @@ public class FreeFollowView : AView
             return;
         }
 
-        // Handle player input for yaw
-        float inputYaw = Input.GetAxis("Horizontal"); // Assuming "Horizontal" axis controls yaw
+
+        float inputYaw = Input.GetAxis("Horizontal"); 
         yaw += inputYaw * yawSpeed * Time.deltaTime;
 
-        // Handle player input for curve position
-        //float inputCurve = Input.GetAxis("Vertical"); // Assuming "Vertical" axis controls curve position
-        //curvePosition += inputCurve * curveSpeed * Time.deltaTime;
-        //curvePosition = Mathf.Clamp01(curvePosition);
-
-        // Calculate the transformation matrix based on yaw and target position
         Quaternion yawRotation = Quaternion.Euler(0f, yaw, 0f);
         Vector3 targetPosition = target.position;
         Matrix4x4 curveToWorldMatrix = Matrix4x4.TRS(targetPosition, yawRotation, Vector3.one);
 
-        // Get the position on the curve
         Vector3 curvePoint = curve.GetPosition(curvePosition, curveToWorldMatrix);
 
-        // Determine which segment of the curve to use for interpolation
-        // Assuming bottom (t=0), middle (t=0.5), top (t=1)
         float t = curvePosition;
 
-        // Interpolate camera configuration based on curve position
+
         float interpolatedPitch = Mathf.Lerp(
-            pitch[0], // Bottom
-            Mathf.Lerp(pitch[0], pitch[1], 2f * t), // Between bottom and middle
+            pitch[0], 
+            Mathf.Lerp(pitch[0], pitch[1], 2f * t), 
             t < 0.5f ? 2f * t : 1f
         );
 
         float interpolatedRoll = Mathf.Lerp(
-            roll[0], // Bottom
-            Mathf.Lerp(roll[0], roll[1], 2f * t), // Between bottom and middle
+            roll[0], 
+            Mathf.Lerp(roll[0], roll[1], 2f * t), 
             t < 0.5f ? 2f * t : 1f
         );
 
         float interpolatedFov = Mathf.Lerp(
-            fov[0], // Bottom
-            Mathf.Lerp(fov[0], fov[1], 2f * t), // Between bottom and middle
+            fov[0], 
+            Mathf.Lerp(fov[0], fov[1], 2f * t),
             t < 0.5f ? 2f * t : 1f
         );
 

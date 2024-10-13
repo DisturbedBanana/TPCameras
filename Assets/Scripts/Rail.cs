@@ -3,17 +3,16 @@ using UnityEngine;
 public class Rail : MonoBehaviour
 {
     [Header("Rail Settings")]
-    public bool isLoop = false; // Determines if the rail is a loop
+    public bool isLoop = false; 
 
-    private float length = 0f; // Total length of the rail
-    private Vector3[] nodes; // Positions of the rail nodes
+    private float length = 0f; 
+    private Vector3[] nodes; 
 
     private void Start()
     {
         InitializeRail();
     }
 
-    // Initialize the rail by calculating the total length and storing node positions
     private void InitializeRail()
     {
         int childCount = transform.childCount;
@@ -24,7 +23,7 @@ public class Rail : MonoBehaviour
             nodes[i] = transform.GetChild(i).position;
         }
 
-        // Calculate total length
+       
         length = 0f;
         for (int i = 0; i < childCount - 1; i++)
         {
@@ -37,19 +36,17 @@ public class Rail : MonoBehaviour
         }
     }
 
-    // Get the total length of the rail
+    
     public float GetLength()
     {
         return length;
     }
 
-    // Get a position on the rail based on distance from the first node
     public Vector3 GetPosition(float distance)
     {
         if (nodes.Length == 0)
             return Vector3.zero;
 
-        // Handle looping
         if (isLoop)
         {
             distance %= length;
@@ -80,7 +77,6 @@ public class Rail : MonoBehaviour
         return nodes[nodes.Length - 1];
     }
 
-    // Draw Gizmos to visualize the rail
     private void OnDrawGizmos()
     {
         Gizmos.color = isLoop ? Color.green : Color.yellow;

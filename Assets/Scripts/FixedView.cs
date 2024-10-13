@@ -15,7 +15,6 @@ public class FixedView : AView
     [Range(0f, 179f)]
     public float fov;
 
-    // Override to provide this view's camera configuration
     public override CameraConfiguration GetConfiguration()
     {
         return new CameraConfiguration
@@ -25,7 +24,7 @@ public class FixedView : AView
             roll = roll,
             fov = fov,
             pivot = transform.position,
-            distance = 0f // Fixed position; no offset
+            distance = 0f 
         };
     }
 }

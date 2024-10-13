@@ -9,15 +9,15 @@ public class DollyView : AView
     [Range(0f, 179f)]
     public float fov;
 
-    public Transform target; // Target to follow
+    public Transform target; 
 
     [Header("Rail Settings")]
-    public Rail rail; // Rail to move along
-    public float distanceOnRail = 0f; // Current distance along the rail
-    public float speed = 5f; // Speed of manual movement along the rail
+    public Rail rail;
+    public float distanceOnRail = 0f; 
+    public float speed = 5f; 
 
     [Header("Automatic Follow Settings")]
-    public bool isAuto = false; // Determines if the dolly follows automatically
+    public bool isAuto = false; 
 
     private void Update()
     {
@@ -29,16 +29,13 @@ public class DollyView : AView
 
         if (isAuto && target != null)
         {
-            // Find the nearest point on the rail to the target
             distanceOnRail = FindNearestPointOnRail(target.position);
         }
         else
         {
-            // Player input to control movement along the rail
-            float input = Input.GetAxis("Horizontal"); // Assuming "Horizontal" axis controls dolly movement
+            float input = Input.GetAxis("Horizontal"); 
             distanceOnRail += input * speed * Time.deltaTime;
 
-            // Clamp or loop distance based on rail settings
             if (rail.isLoop)
             {
                 distanceOnRail %= rail.GetLength();
@@ -52,7 +49,6 @@ public class DollyView : AView
         }
     }
 
-    // Find the nearest point on the rail to the target position
     private float FindNearestPointOnRail(Vector3 targetPosition)
     {
         float nearestDistance = 0f;
@@ -77,14 +73,12 @@ public class DollyView : AView
             if (distance < smallestDistance)
             {
                 smallestDistance = distance;
-                // Calculate distance along the rail up to this segment
                 float segmentLength = Vector3.Distance(a, b);
                 float distanceToNearestPoint = Vector3.Distance(a, nearestPoint);
                 nearestDistance = rail.GetLength() + distanceToNearestPoint;
             }
         }
 
-        // Clamp or loop the nearestDistance
         if (rail.isLoop)
         {
             nearestDistance %= rail.GetLength();
@@ -99,20 +93,15 @@ public class DollyView : AView
         return nearestDistance;
     }
 
-    // Override to provide this view's camera configuration based on rail position
     public override CameraConfiguration GetConfiguration()
     {
-        // Get position on rail
         Vector3 railPosition = rail.GetPosition(distanceOnRail);
 
-        // Calculate direction towards target
         Vector3 direction = (target.position - railPosition).normalized;
 
-        // Calculate yaw and pitch
         float calculatedYaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
         float calculatedPitch = -Mathf.Asin(Mathf.Clamp(direction.y, -1f, 1f)) * Mathf.Rad2Deg;
 
-        // Create and return the camera configuration
         return new CameraConfiguration
         {
             yaw = calculatedYaw,
@@ -120,7 +109,7 @@ public class DollyView : AView
             roll = roll,
             fov = fov,
             pivot = railPosition,
-            distance = 0f // Fixed position on rail; adjust if needed
+            distance = 0f 
         };
     }
 }

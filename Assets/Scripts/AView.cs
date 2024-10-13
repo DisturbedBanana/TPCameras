@@ -4,15 +4,13 @@ using UnityEngine;
 public abstract class AView : MonoBehaviour
 {
     [Header("View Settings")]
-    public float weight = 1.0f; // Weight for interpolation
-     // Determines if the view is active at the start
+    public float weight = 1.0f;
 
     protected virtual void Start()
     {
    
     }
 
-    // Activate or deactivate the view
     public void SetActive(bool isActive)
     {
         if (isActive)
@@ -21,7 +19,6 @@ public abstract class AView : MonoBehaviour
             CameraController.Instance.RemoveView(this);
     }
 
-    // Abstract method to get the camera configuration from the view
     public abstract CameraConfiguration GetConfiguration();
 
 
